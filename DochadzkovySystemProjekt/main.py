@@ -1,11 +1,11 @@
-import lcd_driver
-import mysql_connection
-from time import sleep
+#!/usr/bin/env python
+# -*- coding: utf8 -*-
+
+from rfid_rc522 import RFID
+
+rfid = RFID()
+
+if __name__ == '__main__':
+    rfid.run_rfid()
 
 
-mylcd = lcd_driver.lcd()
-
-# Do metody sa vklada ako druhy argument riadok na display kde sa to vypise
-mylcd.lcd_display_string(mysql_connection.print_data(), 2)
-sleep(5)
-mylcd.lcd_clear()

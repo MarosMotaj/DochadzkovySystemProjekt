@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf8 -*-
+
 import mysql.connector
 
 # Host je IP adresa PC kde bezi MySQL databaza
@@ -5,10 +8,10 @@ import mysql.connector
 
 
 def print_data():
-    mysql_database = mysql.connector.connect(host="",
-                                             user="",
-                                             password="",
-                                             database="")
+    mysql_database = mysql.connector.connect(host="192.168.0.100",
+                                             user="root",
+                                             password="Montoza1857",
+                                             database="dochadzkovy_system")
 
 
     my_cursor = mysql_database.cursor()
@@ -20,6 +23,7 @@ def print_data():
 
     # for i in data:
     #     print(i)
+    mysql_database.close()
+
     return data[1]+" "+data[2]
 
-    # mysql_database.close()
