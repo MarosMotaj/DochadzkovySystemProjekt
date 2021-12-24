@@ -14,6 +14,7 @@ import time
 class RFID:
 
     def __init__(self):
+        GPIO.setwarnings(False)
         self.continue_reading = True
         self.signal = signal.signal(signal.SIGINT, self.end_read)
         self.MIFAREReader = MFRC522.MFRC522()

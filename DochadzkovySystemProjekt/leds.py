@@ -11,6 +11,7 @@ class Leds:
         self.red_pin = red_pin
         self.on = 1
         self.off = 0
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.green_pin, GPIO.OUT)
         GPIO.setup(self.red_pin, GPIO.OUT)
