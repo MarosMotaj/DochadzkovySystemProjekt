@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+import time
 
 import mysql.connector
+import socket
 
 """
         host="34.116.128.160",
@@ -23,11 +25,17 @@ class SQL:
         self.user = user
         self.password = password
         self.database = database
+
+    def connect_to_sql(self):
         self.mysql_database = mysql.connector.connect(host=self.host,
                                                       user=self.user,
                                                       password=self.password,
                                                       database=self.database)
         self.my_cursor = self.mysql_database.cursor()
+
+    # def check_sql_connection(self):
+    #     self.my_cursor.execute("SELECT NOW()")
+    #     print("chceck connection")
 
     def insert_user_id(self):
         self.my_cursor.execute("UPDATE TG_OPS_LIST SET OPS_CHIP='122-79-161-190-42' WHERE ID='2'")

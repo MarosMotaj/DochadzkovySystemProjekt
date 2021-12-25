@@ -6,6 +6,7 @@ import mfrc522 as MFRC522
 from leds import Leds
 from lcd_display import LCD
 from clock import Clock
+from mysql_connection import SQL
 import signal
 import lcd_driver
 import time
@@ -19,6 +20,7 @@ class RFID:
         self.signal = signal.signal(signal.SIGINT, self.end_read)
         self.MIFAREReader = MFRC522.MFRC522()
         self.lcd_clear = lcd_driver.lcd()
+        self.sql = SQL("34.116.128.160", "rpi_i_s_u", "rpi_i_s_u", "RPI_ATTEND")
         self.lcd = LCD()
         self.led = Leds()
         self.clock = Clock()
@@ -30,10 +32,22 @@ class RFID:
         GPIO.cleanup()
 
     def run_rfid(self):
-        # This loop keeps checking for chips. If one is near it will get the UID and authenticate
+        try:
+            self.sql.connect_to_sql()
+            self.led.red_led_off()
+            self.led.green_led_on()
+            self.lcd.lcd_print_data("Pripojene na SQL", 2, 1)
+            self.lcd_clear.lcd_clear()
+        except:
+            self.led.green_led_off()
+            self.led.red_led_on()
+            self.lcd.lcd_print_data("Nepripojene na SQL", 2, 1)
+            quit()
 
+        # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         while self.continue_reading:
-            self.lcd.lcd_print_data(self.clock.clock_time(), 1, 2)
+
+            self.lcd.lcd_print_data(self.clock.clock_time(), 0, 2)
             # Scan for cards
             (status, TagType) = self.MIFAREReader.MFRC522_Request(self.MIFAREReader.PICC_REQIDL)
 
@@ -53,7 +67,7 @@ class RFID:
                     uid[3]) + ',' + str(
                     uid[4]))
                 self.lcd.lcd_print_data("      ID karty:      "
-                    + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
+                                        + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
                     uid[3]) + ',' + str(
                     uid[4]), 2, 1)
 
@@ -66,11 +80,17 @@ class RFID:
                 # ENTER Your Card UID here
                 my_uid = [122, 79, 161, 190, 42]
 
-
                 # Check to see if card UID read matches your card UID
                 if uid == my_uid:  # Open the Doggy Door if matching UIDs
                     self.lcd_clear.lcd_clear()
                     self.led.green_led_on()
+                    try:
+                        self.sql.connect_to_sql()
+                    except:
+                        print("SQL je nedostupne")
+                        self.lcd.lcd_print_data("Vypadok SQL spojenia", 2, 1)
+                        quit()
+                    self.sql.print_table_data()
                     self.lcd.lcd_print_data("Vstup povoleny", 2, 1)
                     print("Vstup povoleny")
                     self.led.green_led_off()
