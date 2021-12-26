@@ -33,9 +33,29 @@ class SQL:
                                                       database=self.database)
         self.my_cursor = self.mysql_database.cursor()
 
-    # def check_sql_connection(self):
-    #     self.my_cursor.execute("SELECT NOW()")
-    #     print("chceck connection")
+    # Ziska nazov pracovnej linky
+    def get_line_name(self):
+        self.connect_to_sql()
+        self.my_cursor.execute("SELECT LINE FROM TG_LINE_PAR WHERE VALUE_CHAR='AA1'")
+        data = self.my_cursor.fetchall().pop(0)
+        line_name = data[0]
+        self.mysql_database.close()
+        return f"Nazov linky : {line_name}"
+
+    # Kontrola ci je niekto nalogovany
+    def check_if_user_logged(self):
+        self.connect_to_sql()
+        self.my_cursor.execute("SELECT ID, LINE, OPS_ID, TAG_SINCE, TAG_TO FROM TG_OPS_2 WHERE LINE='STR_4' ORDER BY ID DESC LIMIT 1")
+        data = self.my_cursor.fetchall().pop(0)
+        tag_to = data[4]
+        ops_id = data[2]
+        tag_since = data[3]
+        self.mysql_database.close()
+        if tag_to is None:
+            return f"Prihlaseny: {ops_id}                           {tag_since}"
+        else:
+            return "Prihlaseny: nikto"
+
 
     def insert_user_id(self):
         self.my_cursor.execute("UPDATE TG_OPS_LIST SET OPS_CHIP='122-79-161-190-42' WHERE ID='2'")

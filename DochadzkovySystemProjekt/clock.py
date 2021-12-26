@@ -16,7 +16,7 @@ class Clock:
             hour, minutes, seconds = time2.split(':')
 
             if 12 < int(hour) < 24:
-                clock_time = date+ ' ' + str(int(hour) - 12) + ':' + minutes + ':' + seconds + '' + time3
+                clock_time = date + ' ' + str(int(hour) - 12) + ':' + minutes + ':' + seconds + '' + time3
             else:
                 clock_time = time2 + ' ' + time3
 

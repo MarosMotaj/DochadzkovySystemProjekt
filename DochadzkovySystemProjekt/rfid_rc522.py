@@ -38,10 +38,12 @@ class RFID:
             self.led.green_led_on()
             self.lcd.lcd_print_data("Pripojene na SQL", 2, 1)
             self.lcd_clear.lcd_clear()
+            self.lcd.lcd_print_data(self.sql.get_line_name(), 2, 0)
+            self.lcd.lcd_print_data(self.sql.check_if_user_logged(), 2, 3)
         except:
             self.led.green_led_off()
             self.led.red_led_on()
-            self.lcd.lcd_print_data("Nepripojene na SQL", 2, 1)
+            self.lcd.lcd_print_data("Nepripojene na SQL", 2, 0)
             quit()
 
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
@@ -90,7 +92,7 @@ class RFID:
                         print("SQL je nedostupne")
                         self.lcd.lcd_print_data("Vypadok SQL spojenia", 2, 1)
                         quit()
-                    self.sql.print_table_data()
+                    self.sql.get_line_name()
                     self.lcd.lcd_print_data("Vstup povoleny", 2, 1)
                     print("Vstup povoleny")
                     self.led.green_led_off()
