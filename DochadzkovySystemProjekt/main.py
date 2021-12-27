@@ -4,7 +4,7 @@
 from rfid_rc522 import RFID
 from mysql_connection import SQL
 
-rfid = RFID()
+rfid = RFID("AA1")
 # sql = SQL("34.116.128.160", "rpi_i_s_u", "rpi_i_s_u", "RPI_ATTEND")
 
 if __name__ == '__main__':

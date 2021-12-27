@@ -14,7 +14,8 @@ import time
 
 class RFID:
 
-    def __init__(self):
+    def __init__(self, device_name):
+        self.device_name = device_name
         GPIO.setwarnings(False)
         self.continue_reading = True
         self.signal = signal.signal(signal.SIGINT, self.end_read)
@@ -24,6 +25,8 @@ class RFID:
         self.lcd = LCD()
         self.led = Leds()
         self.clock = Clock()
+        self.date, self.time, self.hour, self.minutes = self.clock.clock_time()
+        self.tag_to, self.ops_id, self.tag_since = self.sql.check_if_user_logged()
 
     # Capture SIGINT for cleanup when the script is aborted
     def end_read(self):
@@ -38,8 +41,6 @@ class RFID:
             self.led.green_led_on()
             self.lcd.lcd_print_data("Pripojene na SQL", 2, 1)
             self.lcd_clear.lcd_clear()
-            self.lcd.lcd_print_data(self.sql.get_line_name(), 2, 0)
-            self.lcd.lcd_print_data(self.sql.check_if_user_logged(), 2, 3)
         except:
             self.led.green_led_off()
             self.led.red_led_on()
@@ -49,7 +50,13 @@ class RFID:
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         while self.continue_reading:
 
-            self.lcd.lcd_print_data(self.clock.clock_time(), 0, 2)
+            self.lcd.lcd_print_data(f"{self.date}       {self.device_name}", 0, 1)
+            self.lcd.lcd_print_data(f"              {self.sql.get_line_name()}", 0, 2)
+            self.lcd.lcd_print_data(f"ACT:  {self.ops_id}", 0, 3)
+            self.lcd.lcd_print_data(f"FROM: {str(self.tag_since)[11:16]}  "
+                                    f"{str(self.tag_since)[2:4]}."
+                                    f"{str(self.tag_since)[5:7]}.", 0, 4)
+
             # Scan for cards
             (status, TagType) = self.MIFAREReader.MFRC522_Request(self.MIFAREReader.PICC_REQIDL)
 

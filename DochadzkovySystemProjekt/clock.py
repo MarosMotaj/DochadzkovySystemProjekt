@@ -20,6 +20,6 @@ class Clock:
             else:
                 clock_time = time2 + ' ' + time3
 
-            return clock_time
+            return date, clock_time, hour, minutes
 
 
