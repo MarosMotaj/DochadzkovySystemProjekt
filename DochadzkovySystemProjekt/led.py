@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO
 
 
-class Leds:
+class Led:
 
     def __init__(self, green_pin=37, red_pin=31):
         self.green_pin = green_pin

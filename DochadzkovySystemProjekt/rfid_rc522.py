@@ -3,10 +3,12 @@
 
 import RPi.GPIO as GPIO
 import mfrc522 as MFRC522
-from leds import Leds
+from led import Led
 from lcd_display import LCD
 from clock import Clock
 from mysql_connection import SQL
+from button import Button
+from buzzer import Buzzer
 import signal
 import time
 
@@ -21,8 +23,10 @@ class RFID:
         self.MIFAREReader = MFRC522.MFRC522()
         self.sql = SQL("34.116.128.160", "rpi_i_s_u", "rpi_i_s_u", "RPI_ATTEND")
         self.lcd = LCD()
-        self.led = Leds()
+        self.led = Led()
         self.clock = Clock()
+        self.buzzer = Buzzer()
+        self.login_button = Button(29)
         self.date, self.time, self.hour, self.minutes = self.clock.clock_time()
         self.tag_to, self.ops_id, self.tag_since = self.sql.check_if_user_logged()
 
@@ -53,7 +57,7 @@ class RFID:
 
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         while self.continue_reading:
-            print("Pripojene na SQL server?: "+str(self.sql.mysql_database.is_connected()))
+            # print("Pripojene na SQL server?: "+str(self.sql.mysql_database.is_connected()))
             # Scan for cards
             (status, TagType) = self.MIFAREReader.MFRC522_Request(self.MIFAREReader.PICC_REQIDL)
 
@@ -67,11 +71,20 @@ class RFID:
             # If we have the UID, continue
             if status == self.MIFAREReader.MI_OK:
                 self.lcd.clear()
+                detected_chip_number = str(uid[0])+"-"+str(uid[1])+"-"+ str(uid[2])+"-"+str(uid[3])+"-"+str(uid[4])
+                if self.sql.check_chip_number(detected_chip_number)[1] is False:
+                    self.led.red_led_on()
+                    self.lcd.lcd_print_data("Operator nie je v          zozname", 0, 2)
+                    self.buzzer.run_buzzer()
+                    self.led.red_led_off()
+                    self.lcd.clear()
+                else:
+                    print("Karta presla")
 
-                # Print UID
-                print("UID karty: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
-                    uid[3]) + ',' + str(
-                    uid[4]))
+                # # Print UID
+                # print("UID karty: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
+                #     uid[3]) + ',' + str(
+                #     uid[4]))
                 self.lcd.lcd_print_data("      ID karty:      "
                                         + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
                     uid[3]) + ',' + str(
@@ -83,33 +96,35 @@ class RFID:
                 # Select the scanned tag
                 self.MIFAREReader.MFRC522_SelectTag(uid)
 
-                # ENTER Your Card UID here
-                my_uid = [122, 79, 161, 190, 42]
+                # self.lcd.clear()
 
-                # Check to see if card UID read matches your card UID
-                if uid == my_uid:  # Open the Doggy Door if matching UIDs
-                    self.lcd.clear()
-                    self.led.green_led_on()
-                    try:
-                        self.sql.connect_to_sql()
-                        print(self.sql.mysql_database.is_connected())
-                    except:
-                        print("SQL je nedostupne")
-                        self.lcd.lcd_print_data("Vypadok SQL spojenia", 2, 1)
-                        quit()
-                    print(self.sql.get_line_name())
-                    self.lcd.lcd_print_data("Vstup povoleny", 2, 1)
-                    print("Vstup povoleny")
-                    self.led.green_led_off()
-                    self.lcd.clear()
-                    self.sql.mysql_database.close()
-                    print(self.sql.mysql_database.is_connected())
-
-
-                else:  # Don't open if UIDs don't match
-                    self.lcd.clear()
-                    self.led.red_led_on()
-                    self.lcd.lcd_print_data("Vstup zamietnuty", 2, 1)
-                    print("Vstup zamietnuty")
-                    self.led.red_led_off()
-                    self.lcd.clear()
+                # # ENTER Your Card UID here
+                # my_uid = [122, 79, 161, 190, 42]
+                #
+                # # Check to see if card UID read matches your card UID
+                # if uid == my_uid:  # Open the Doggy Door if matching UIDs
+                #     self.lcd.clear()
+                #     self.led.green_led_on()
+                #     try:
+                #         self.sql.connect_to_sql()
+                #         print(self.sql.mysql_database.is_connected())
+                #     except:
+                #         print("SQL je nedostupne")
+                #         self.lcd.lcd_print_data("Vypadok SQL spojenia", 2, 1)
+                #         quit()
+                #     print(self.sql.get_line_name())
+                #     self.lcd.lcd_print_data("Vstup povoleny", 2, 1)
+                #     print("Vstup povoleny")
+                #     self.led.green_led_off()
+                #     self.lcd.clear()
+                #     self.sql.mysql_database.close()
+                #     print(self.sql.mysql_database.is_connected())
+                #
+                #
+                # else:  # Don't open if UIDs don't match
+                #     self.lcd.clear()
+                #     self.led.red_led_on()
+                #     self.lcd.lcd_print_data("Vstup zamietnuty", 2, 1)
+                #     print("Vstup zamietnuty")
+                #     self.led.red_led_off()
+                #     self.lcd.clear()

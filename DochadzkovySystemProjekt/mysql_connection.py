@@ -61,6 +61,21 @@ class SQL:
 
         return tag_to, ops_id, tag_since
 
+    def check_chip_number(self, detected_chip_number):
+        print(detected_chip_number)
+        self.connect_to_sql()
+        my_cursor = self.mysql_database.cursor()
+        try:
+            my_cursor.execute(f"SELECT ID, OPS_ID, OPS_CHIP FROM TG_OPS_LIST WHERE OPS_CHIP='{detected_chip_number}' ORDER BY ID DESC LIMIT 1")
+            data = my_cursor.fetchall().pop(0)
+            id = data[0]
+            ops_id = data[1]
+            ops_chip = data[2]
+            self.mysql_database.close()
+            return ops_id, True
+        except:
+            return "Karta nepresla", False
+
     def insert_user_id(self):
         self.connect_to_sql()
         my_cursor = self.mysql_database.cursor()
