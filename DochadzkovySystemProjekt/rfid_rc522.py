@@ -23,12 +23,12 @@ class RFID:
         self.MIFAREReader = MFRC522.MFRC522()
         self.sql = SQL("34.116.128.160", "rpi_i_s_u", "rpi_i_s_u", "RPI_ATTEND")
         self.lcd = LCD()
-        self.led = Led()
+        self.green_led = Led(37)
+        self.red_led = Led(31)
         self.clock = Clock()
         self.buzzer = Buzzer()
         self.login_button = Button(29)
         self.date, self.time, self.hour, self.minutes = self.clock.clock_time()
-        self.tag_to, self.ops_id, self.tag_since = self.sql.check_if_user_logged()
 
     # Capture SIGINT for cleanup when the script is aborted
     def end_read(self):
@@ -36,28 +36,33 @@ class RFID:
         self.continue_reading = False
         GPIO.cleanup()
 
+    def check_if_user_logged(self):
+        self.sql.connect_to_sql()
+        self.line_name = self.sql.get_line_name()
+        tag_to, ops_id, tag_since = self.sql.check_if_user_logged()
+        self.lcd.lcd_print_data("Pripojene na SQL", 2, 1)
+        self.lcd.lcd_print_data(f"{self.date}       {self.device_name}", 0, 1)
+        self.lcd.lcd_print_data(f"              {self.sql.get_line_name()}", 0, 2)
+        self.lcd.lcd_print_data(f"AC:{ops_id}", 0, 3)
+        self.lcd.lcd_print_data(f"FROM: {str(tag_since)[11:16]}  "
+                                f"{str(tag_since)[2:4]}."
+                                f"{str(tag_since)[8:11].strip()}.", 0, 4)
+        self.sql.mysql_database.close()
+
     def run_rfid(self):
         try:
-            self.sql.connect_to_sql()
-            self.led.red_led_off()
-            self.led.green_led_on()
-            self.lcd.lcd_print_data("Pripojene na SQL", 2, 1)
-            self.lcd.lcd_print_data(f"{self.date}       {self.device_name}", 0, 1)
-            self.lcd.lcd_print_data(f"              {self.sql.get_line_name()}", 0, 2)
-            self.lcd.lcd_print_data(f"ACT:  {self.ops_id}", 0, 3)
-            self.lcd.lcd_print_data(f"FROM: {str(self.tag_since)[11:16]}  "
-                                    f"{str(self.tag_since)[2:4]}."
-                                    f"{str(self.tag_since)[5:7]}.", 0, 4)
-            self.sql.mysql_database.close()
+            self.red_led.off()
+            self.green_led.on()
+            self.check_if_user_logged()
         except:
-            self.led.green_led_off()
-            self.led.red_led_on()
+            self.green_led.off()
+            self.red_led.on()
             self.lcd.lcd_print_data("Nepripojene na SQL", 2, 0)
             quit()
 
         # This loop keeps checking for chips. If one is near it will get the UID and authenticate
         while self.continue_reading:
-            # print("Pripojene na SQL server?: "+str(self.sql.mysql_database.is_connected()))
+            print("Pripojene na SQL server?: "+str(self.sql.mysql_database.is_connected()))
             # Scan for cards
             (status, TagType) = self.MIFAREReader.MFRC522_Request(self.MIFAREReader.PICC_REQIDL)
 
@@ -71,30 +76,53 @@ class RFID:
             # If we have the UID, continue
             if status == self.MIFAREReader.MI_OK:
                 self.lcd.clear()
-                detected_chip_number = str(uid[0])+"-"+str(uid[1])+"-"+ str(uid[2])+"-"+str(uid[3])+"-"+str(uid[4])
-                if self.sql.check_chip_number(detected_chip_number)[1] is False:
-                    self.led.red_led_on()
-                    self.lcd.lcd_print_data("Operator nie je v          zozname", 0, 2)
-                    self.buzzer.run_buzzer()
-                    self.led.red_led_off()
-                    self.lcd.clear()
-                else:
-                    print("Karta presla")
+                try:
+                    detected_chip_number = str(uid[0])+"-"+str(uid[1])+"-"+ str(uid[2])+"-"+str(uid[3])+"-"+str(uid[4])
+                    if self.sql.check_chip_number(detected_chip_number)[1] is False:
+                        self.red_led.on()
+                        self.lcd.lcd_print_data("Karta nerozpoznana", 0, 2)
+                        self.lcd.lcd_print_data("ID:" + str(uid[0]) + "-" + str(uid[1]) + "-" + str(uid[2]) + "-" + str(
+                            uid[3]) + '-' + str(
+                            uid[4]), 1, 1)
+                        self.buzzer.run_buzzer()
+                        self.red_led.off()
+                        self.lcd.clear()
+                        self.check_if_user_logged()
+                    else:
+                        self.lcd.lcd_print_data("ID:" + str(uid[0]) + "-" + str(uid[1]) + "-" + str(uid[2]) + "-" + str(
+                            uid[3]) + '-' + str(
+                            uid[4]), 1, 1)
+                        self.lcd.lcd_print_data("Karta rozpoznana", 0, 2)
+                        self.buzzer.run_buzzer()
+                        self.lcd.lcd_print_data("Stlac prichod/odchod", 0, 2)
+                        while True:
+                            if self.login_button.button_callback() is True:
+                                print("tlacitko stlacene")
+                                self.sql.insert_user(self.sql.get_line_name(), detected_chip_number)
+                                time.sleep(1)
+                                break
+                        self.lcd.clear()
+                        self.check_if_user_logged()
+
+                        print(self.sql.print_table_data())
+
+                except Exception as e:
+                    print(e)
+                    self.lcd.lcd_print_data("Chyba", 0, 2)
 
                 # # Print UID
                 # print("UID karty: " + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
                 #     uid[3]) + ',' + str(
                 #     uid[4]))
-                self.lcd.lcd_print_data("      ID karty:      "
-                                        + str(uid[0]) + "," + str(uid[1]) + "," + str(uid[2]) + "," + str(
-                    uid[3]) + ',' + str(
-                    uid[4]), 2, 1)
-
-                # This is the default key for authentication
-                key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
-
-                # Select the scanned tag
-                self.MIFAREReader.MFRC522_SelectTag(uid)
+                # self.lcd.lcd_print_data("ID:" + str(uid[0]) + "-" + str(uid[1]) + "-" + str(uid[2]) + "-" + str(
+                #                         uid[3]) + '-' + str(
+                #                         uid[4]), 1, 1)
+                #
+                # # This is the default key for authentication
+                # # key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
+                #
+                # # Select the scanned tag
+                # self.MIFAREReader.MFRC522_SelectTag(uid)
 
                 # self.lcd.clear()
 

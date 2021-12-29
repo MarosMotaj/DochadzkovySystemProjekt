@@ -76,10 +76,10 @@ class SQL:
         except:
             return "Karta nepresla", False
 
-    def insert_user_id(self):
+    def insert_user(self, line_name, ops_id):
         self.connect_to_sql()
         my_cursor = self.mysql_database.cursor()
-        my_cursor.execute("UPDATE TG_OPS_LIST SET OPS_CHIP='122-79-161-190-42' WHERE ID='2'")
+        my_cursor.execute(f"INSERT INTO TG_OPS_2(LINE, OPS_ID, TAG_SINCE) VALUES ('{line_name}','{ops_id}',NOW())")
         # musi byt commit inaksie neurobi zmeny po zapise
         self.mysql_database.commit()
         self.mysql_database.close()
@@ -92,7 +92,7 @@ class SQL:
         self.connect_to_sql()
         my_cursor = self.mysql_database.cursor()
         # vypise vsetky nazvy stlpcov
-        my_cursor.execute("SELECT * FROM TG_OPS_LIST")
+        my_cursor.execute("SELECT * FROM TG_OPS_2")
 
         # Vypise data na zadanom indexe
         data = my_cursor.fetchall()
