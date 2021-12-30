@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
-import time
 
 import RPi.GPIO as GPIO
 
@@ -8,7 +7,6 @@ import RPi.GPIO as GPIO
 class Button:
 
     def __init__(self, button_pin):
-        self.status = False
         self.button_pin = button_pin
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)

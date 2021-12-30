@@ -14,7 +14,6 @@ class LCD:
         # Do metody sa vklada ako druhy argument riadok na display kde sa to vypise
         self.lcd.lcd_display_string(str(data), row)
         sleep(refresh_time)
-        # self.lcd.lcd_clear()
 
     def clear(self):
         self.lcd.lcd_clear()

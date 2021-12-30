@@ -2,7 +2,6 @@
 # -*- coding: utf8 -*-
 
 from datetime import datetime
-import time
 
 
 class Clock:

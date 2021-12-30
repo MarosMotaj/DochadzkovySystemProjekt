@@ -4,6 +4,7 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
+
 class Buzzer:
 
     def __init__(self, pin=18):
