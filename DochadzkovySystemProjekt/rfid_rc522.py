@@ -22,7 +22,7 @@ class RFID:
         self.continue_reading = True
         self.signal = signal.signal(signal.SIGINT, self.end_read)
         self.MIFAREReader = MFRC522.MFRC522()
-        self.sql = SQL("34.116.128.160", "rpi_i_s_u", "rpi_i_s_u", "RPI_ATTEND")
+        self.sql = SQL("", "", "", "")
         self.lcd = LCD()
         self.green_led = Led(37)
         self.red_led = Led(31)
